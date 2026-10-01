@@ -9,10 +9,10 @@ import androidx.compose.ui.unit.dp
 import com.example.hydrate.R
 
 @Composable
-fun BunnyIllustration(modifier: Modifier = Modifier) {
+fun BunnyIllustration(modifier: Modifier = Modifier.size(150.dp)) {
     Image(
         painter = painterResource(id = R.drawable.ic_bunny_logo),
         contentDescription = "Cute Bunny",
-        modifier = modifier.size(150.dp)
+        modifier = modifier
     )
 }

@@ -6,13 +6,12 @@ import androidx.lifecycle.viewModelScope
 import com.example.hydrate.data.db.HydrateDatabase
 import com.example.hydrate.data.model.WaterLog
 import com.example.hydrate.data.prefs.SettingsRepository
+import com.example.hydrate.data.time.LocalDay
+import com.example.hydrate.widget.WidgetUpdater
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class AlarmViewModel(application: Application) : AndroidViewModel(application) {
     private val db = HydrateDatabase.getDatabase(application)
@@ -28,13 +27,12 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
     fun drinkWater(onComplete: () -> Unit) {
         viewModelScope.launch {
             val amount = repo.glassSizeMl.first()
-            
-            val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+            val timestamp = System.currentTimeMillis()
             db.hydrateDao().insertWaterLog(
                 WaterLog(
                     amountMl = amount,
-                    timestamp = System.currentTimeMillis(),
-                    date = today
+                    timestamp = timestamp,
+                    date = LocalDay.keyAt(timestamp)
                 )
             )
 
@@ -43,6 +41,8 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
             val end = repo.endTimeMins.first()
             val interval = repo.intervalMins.first()
             scheduler.scheduleNextAlarm(start, end, interval)
+
+            WidgetUpdater.updateAllWidgets(getApplication())
 
             onComplete()
         }

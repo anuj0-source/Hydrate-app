@@ -24,6 +24,9 @@ interface HydrateDao {
     @Query("SELECT SUM(amountMl) FROM water_logs WHERE date = :date")
     fun getTotalWaterForDate(date: String): Flow<Int?>
 
+    @Query("SELECT COUNT(*) FROM water_logs WHERE date = :date")
+    fun getDrinkCountForDate(date: String): Flow<Int>
+
     @Query("DELETE FROM water_logs")
     suspend fun clearAllWaterLogs()
 

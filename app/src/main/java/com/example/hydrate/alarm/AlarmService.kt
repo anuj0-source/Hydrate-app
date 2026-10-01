@@ -15,6 +15,7 @@ import android.os.IBinder
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -71,6 +72,13 @@ class AlarmService : Service() {
             .build()
 
         startForeground(NOTIFICATION_ID, notification)
+
+        // Directly launch AlarmActivity so it opens immediately on screen
+        try {
+            startActivity(fullScreenIntent)
+        } catch (e: Exception) {
+            Log.e("AlarmService", "Failed to launch AlarmActivity directly", e)
+        }
 
         playAlarm()
 

@@ -8,16 +8,25 @@ import android.os.Build
 import android.util.Log
 import com.example.hydrate.data.db.HydrateDatabase
 import com.example.hydrate.data.prefs.SettingsRepository
+import com.example.hydrate.data.time.LocalDay
 import kotlinx.coroutines.flow.first
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
-import java.util.Locale
 
 class AlarmScheduler(private val context: Context) {
     private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-    suspend fun scheduleNextAlarm(startTimeMins: Int, endTimeMins: Int, intervalMins: Int) {
+    suspend fun scheduleNextAlarm(
+        startTimeMins: Int,
+        endTimeMins: Int,
+        intervalMins: Int,
+        skipNextScheduledReminder: Boolean = false
+    ) {
+        val repo = SettingsRepository(context)
+        if (!repo.isAlarmEnabled.first()) {
+            cancelAlarm()
+            return
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (!alarmManager.canScheduleExactAlarms()) {
                 Log.w("AlarmScheduler", "Cannot schedule exact alarms - missing permission")
@@ -26,8 +35,7 @@ class AlarmScheduler(private val context: Context) {
         }
 
         val db = HydrateDatabase.getDatabase(context)
-        val repo = SettingsRepository(context)
-        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val today = LocalDay.keyAt()
 
         val totalWater = db.hydrateDao().getTotalWaterForDate(today).first() ?: 0
         val dailyGoal = repo.dailyGoalMl.first()
@@ -38,6 +46,7 @@ class AlarmScheduler(private val context: Context) {
 
         val nextAlarmCal = Calendar.getInstance()
 
+        val safeIntervalMins = intervalMins.coerceAtLeast(1)
         var targetMins = startTimeMins
 
         if (isGoalReached) {
@@ -46,7 +55,13 @@ class AlarmScheduler(private val context: Context) {
         } else {
             // Calculate next alarm time today
             while (targetMins <= currentMins) {
-                targetMins += intervalMins
+                targetMins += safeIntervalMins
+            }
+
+            if (skipNextScheduledReminder) {
+                // A manual drink satisfies the upcoming reminder slot, so move to the
+                // following scheduled interval instead of alarming again right away.
+                targetMins += safeIntervalMins
             }
 
             if (targetMins > endTimeMins) {
@@ -63,7 +78,7 @@ class AlarmScheduler(private val context: Context) {
 
         // Ensure we don't schedule in the past
         if (nextAlarmCal.timeInMillis <= System.currentTimeMillis()) {
-            nextAlarmCal.add(Calendar.MINUTE, intervalMins)
+            nextAlarmCal.add(Calendar.MINUTE, safeIntervalMins)
         }
 
         val pendingIntent = getPendingIntent()

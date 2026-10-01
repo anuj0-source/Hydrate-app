@@ -2,13 +2,21 @@ package com.example.hydrate.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Pink80 = Color(0xFFEFB8C8)
-val Pink40 = Color(0xFF7D5260)
-
-val PastelBlushPink = Color(0xFFFFE4E1) // Very light pink
-val PastelCream = Color(0xFFFFFDD0) // Cream
-val PastelRose = Color(0xFFFFB6C1) // Soft Rose
-val BabyBlue = Color(0xFFAEC6CF) // Accent for water
-val DarkPlum = Color(0xFF4A2333) // Text color
+val VibrantStrawberryPink = Color(0xFFFF3366) // Primary: Bright, energetic pink
+val BubblegumPink = Color(0xFFFF85A2)        // Secondary: Fun bubblegum pink
+val ElectricWaterBlue = Color(0xFF00B0FF)    // Accent: Bright water blue
+val LavenderBlushBg = Color(0xFFFFF0F5)      // Background: Fresh bright light blush
+val RichBerryText = Color(0xFF33001B)        // Text: High-contrast rich berry
 val WhiteCard = Color(0xFFFFFFFF)
-val SuccessGreen = Color(0xFFB5EAD7)
+val VibrantMintGreen = Color(0xFF2ED573)
+val SoftPinkContainer = Color(0xFFFFE6EE)
+
+// Legacy compatibility aliases
+val PastelBlushPink = LavenderBlushBg
+val PastelCream = Color(0xFFFFFDD0)
+val PastelRose = VibrantStrawberryPink
+val BabyBlue = ElectricWaterBlue
+val DarkPlum = RichBerryText
+val Pink80 = BubblegumPink
+val Pink40 = Color(0xFF7D5260)
+val SuccessGreen = VibrantMintGreen

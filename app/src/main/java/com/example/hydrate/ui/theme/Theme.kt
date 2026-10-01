@@ -10,23 +10,24 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val LightColorScheme = lightColorScheme(
-    primary = PastelRose,
-    secondary = Pink80,
-    tertiary = BabyBlue,
-    background = PastelBlushPink,
+    primary = VibrantStrawberryPink,
+    secondary = BubblegumPink,
+    tertiary = ElectricWaterBlue,
+    background = LavenderBlushBg,
     surface = WhiteCard,
-    onPrimary = DarkPlum,
-    onSecondary = DarkPlum,
-    onTertiary = DarkPlum,
-    onBackground = DarkPlum,
-    onSurface = DarkPlum
+    onPrimary = WhiteCard,
+    onSecondary = WhiteCard,
+    onTertiary = WhiteCard,
+    onBackground = RichBerryText,
+    onSurface = RichBerryText,
+    primaryContainer = SoftPinkContainer,
+    onPrimaryContainer = RichBerryText
 )
 
 @Composable
 fun HydrateTheme(
     content: @Composable () -> Unit
 ) {
-    // We enforce light color scheme and ignore dark mode
     val colorScheme = LightColorScheme
     val view = LocalView.current
     if (!view.isInEditMode) {

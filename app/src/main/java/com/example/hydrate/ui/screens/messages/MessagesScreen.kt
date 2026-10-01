@@ -56,7 +56,7 @@ fun MessagesScreen(viewModel: MessagesViewModel = viewModel()) {
         Spacer(Modifier.height(24.dp))
 
         LazyColumn(modifier = Modifier.weight(1f)) {
-            items(messages) { msg ->
+            items(messages, key = { it.id }) { msg ->
                 val isSelected = msg.text == selected
                 Card(
                     modifier = Modifier

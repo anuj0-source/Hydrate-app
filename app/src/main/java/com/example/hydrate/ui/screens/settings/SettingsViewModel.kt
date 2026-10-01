@@ -5,7 +5,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hydrate.alarm.AlarmScheduler
 import com.example.hydrate.data.prefs.SettingsRepository
+import com.example.hydrate.widget.WidgetUpdater
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -20,8 +22,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     val dailyGoalMl = repo.dailyGoalMl.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 2000)
     val glassSizeMl = repo.glassSizeMl.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 250)
 
-    fun setAlarmEnabled(enabled: Boolean) = viewModelScope.launch { 
-        repo.setAlarmEnabled(enabled) 
+    fun setAlarmEnabled(enabled: Boolean) = viewModelScope.launch {
+        repo.setAlarmEnabled(enabled)
         if (enabled) reschedule() else scheduler.cancelAlarm()
     }
 
@@ -35,24 +37,34 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         reschedule()
     }
 
-    fun setInterval(mins: Int) = viewModelScope.launch { 
+    fun setInterval(mins: Int) = viewModelScope.launch {
+        if (mins <= 0) return@launch
         repo.setIntervalMins(mins)
         reschedule()
     }
 
     fun setDailyGoal(ml: Int) = viewModelScope.launch {
+        if (ml <= 0) return@launch
         repo.setDailyGoalMl(ml)
         reschedule()
+        WidgetUpdater.updateAllWidgets(getApplication())
     }
 
     fun setGlassSize(ml: Int) = viewModelScope.launch {
         repo.setGlassSizeMl(ml)
         reschedule()
+        WidgetUpdater.updateAllWidgets(getApplication())
     }
 
-    private fun reschedule() = viewModelScope.launch {
-        if (isAlarmEnabled.value) {
-            scheduler.scheduleNextAlarm(startTimeMins.value, endTimeMins.value, intervalMins.value)
+    private suspend fun reschedule() {
+        if (repo.isAlarmEnabled.first()) {
+            scheduler.scheduleNextAlarm(
+                repo.startTimeMins.first(),
+                repo.endTimeMins.first(),
+                repo.intervalMins.first()
+            )
+        } else {
+            scheduler.cancelAlarm()
         }
     }
 
