@@ -6,12 +6,18 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.util.Log
+import com.example.hydrate.data.db.HydrateDatabase
+import com.example.hydrate.data.prefs.SettingsRepository
+import kotlinx.coroutines.flow.first
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class AlarmScheduler(private val context: Context) {
     private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-    fun scheduleNextAlarm(startTimeMins: Int, endTimeMins: Int, intervalMins: Int) {
+    suspend fun scheduleNextAlarm(startTimeMins: Int, endTimeMins: Int, intervalMins: Int) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (!alarmManager.canScheduleExactAlarms()) {
                 Log.w("AlarmScheduler", "Cannot schedule exact alarms - missing permission")
@@ -19,21 +25,35 @@ class AlarmScheduler(private val context: Context) {
             }
         }
 
+        val db = HydrateDatabase.getDatabase(context)
+        val repo = SettingsRepository(context)
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+
+        val totalWater = db.hydrateDao().getTotalWaterForDate(today).first() ?: 0
+        val dailyGoal = repo.dailyGoalMl.first()
+        val isGoalReached = totalWater >= dailyGoal
+
         val now = Calendar.getInstance()
         val currentMins = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
-        
+
         val nextAlarmCal = Calendar.getInstance()
 
-        // Calculate next alarm time today
         var targetMins = startTimeMins
-        while (targetMins <= currentMins) {
-            targetMins += intervalMins
-        }
 
-        if (targetMins > endTimeMins) {
-            // Schedule for tomorrow at start time
-            targetMins = startTimeMins
+        if (isGoalReached) {
+            Log.d("AlarmScheduler", "Daily goal reached ($totalWater / $dailyGoal ml). Scheduling next alarm for tomorrow at start time.")
             nextAlarmCal.add(Calendar.DAY_OF_YEAR, 1)
+        } else {
+            // Calculate next alarm time today
+            while (targetMins <= currentMins) {
+                targetMins += intervalMins
+            }
+
+            if (targetMins > endTimeMins) {
+                // Schedule for tomorrow at start time
+                targetMins = startTimeMins
+                nextAlarmCal.add(Calendar.DAY_OF_YEAR, 1)
+            }
         }
 
         nextAlarmCal.set(Calendar.HOUR_OF_DAY, targetMins / 60)
@@ -41,7 +61,7 @@ class AlarmScheduler(private val context: Context) {
         nextAlarmCal.set(Calendar.SECOND, 0)
         nextAlarmCal.set(Calendar.MILLISECOND, 0)
 
-        // Ensure we don't schedule in the past (e.g. if currentMins == targetMins but seconds differ)
+        // Ensure we don't schedule in the past
         if (nextAlarmCal.timeInMillis <= System.currentTimeMillis()) {
             nextAlarmCal.add(Calendar.MINUTE, intervalMins)
         }
@@ -68,7 +88,7 @@ class AlarmScheduler(private val context: Context) {
         val nextAlarmCal = Calendar.getInstance().apply {
             add(Calendar.MINUTE, snoozeMins)
         }
-        
+
         val pendingIntent = getPendingIntent()
         try {
             alarmManager.setExactAndAllowWhileIdle(
@@ -81,7 +101,7 @@ class AlarmScheduler(private val context: Context) {
             Log.e("AlarmScheduler", "Missing exact alarm permission", e)
         }
     }
-    
+
     fun scheduleTestAlarm(seconds: Int) {
         val nextAlarmCal = Calendar.getInstance().apply {
             add(Calendar.SECOND, seconds)
@@ -98,7 +118,7 @@ class AlarmScheduler(private val context: Context) {
             Log.e("AlarmScheduler", "Missing exact alarm permission", e)
         }
     }
-    
+
     fun cancelAlarm() {
         alarmManager.cancel(getPendingIntent())
         Log.d("AlarmScheduler", "Alarm canceled")

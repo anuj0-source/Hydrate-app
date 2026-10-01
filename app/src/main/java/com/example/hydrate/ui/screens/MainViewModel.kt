@@ -3,6 +3,7 @@ package com.example.hydrate.ui.screens
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.hydrate.alarm.AlarmScheduler
 import com.example.hydrate.data.db.HydrateDatabase
 import com.example.hydrate.data.model.WaterLog
 import com.example.hydrate.data.prefs.SettingsRepository
@@ -55,6 +56,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     date = today
                 )
             )
+            val start = repo.startTimeMins.first()
+            val end = repo.endTimeMins.first()
+            val interval = repo.intervalMins.first()
+            val scheduler = AlarmScheduler(getApplication())
+            scheduler.scheduleNextAlarm(start, end, interval)
         }
     }
 }

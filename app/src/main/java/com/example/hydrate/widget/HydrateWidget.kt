@@ -24,6 +24,7 @@ import androidx.glance.layout.padding
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
+import com.example.hydrate.alarm.AlarmScheduler
 import com.example.hydrate.data.db.HydrateDatabase
 import com.example.hydrate.data.model.WaterLog
 import com.example.hydrate.data.prefs.SettingsRepository
@@ -94,6 +95,11 @@ class DrinkWaterAction : ActionCallback {
                 date = today
             )
         )
+        val start = repo.startTimeMins.first()
+        val end = repo.endTimeMins.first()
+        val interval = repo.intervalMins.first()
+        AlarmScheduler(context).scheduleNextAlarm(start, end, interval)
+
         // Refresh widget
         HydrateWidget().update(context, glanceId)
     }

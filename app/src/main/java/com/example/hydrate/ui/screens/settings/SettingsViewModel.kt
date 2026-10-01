@@ -42,13 +42,15 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun setDailyGoal(ml: Int) = viewModelScope.launch {
         repo.setDailyGoalMl(ml)
+        reschedule()
     }
 
     fun setGlassSize(ml: Int) = viewModelScope.launch {
         repo.setGlassSizeMl(ml)
+        reschedule()
     }
 
-    private fun reschedule() {
+    private fun reschedule() = viewModelScope.launch {
         if (isAlarmEnabled.value) {
             scheduler.scheduleNextAlarm(startTimeMins.value, endTimeMins.value, intervalMins.value)
         }
